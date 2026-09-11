@@ -2,7 +2,7 @@ from langchain_huggingface import ChatHuggingFace , HuggingFaceEndpoint
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
-from langchain_core.runnables import RunnableParallel
+from langchain_core.runnables import RunnableParallel , RunnableLambda
 import os
 
 load_dotenv()
@@ -28,20 +28,29 @@ model = ChatHuggingFace(llm = llm)
 
 parser = StrOutputParser()
 
+#for same question in parallel
+    
 parallelChain = RunnableParallel({
     "short" : short_prompt | model | parser ,
     "detailed" : detailed_prompt | model | parser
 })
 
-#for same question in parallel
 result = parallelChain.invoke({"topic" : "MERN Stack"})
 print(result['short'])
 print(result["detailed"])
 
 #for different question
-result = parallelChain.invoke({
+
+
+parallelChain2 = RunnableParallel({
+    "short" : RunnableLambda(lambda x : x['short']) | short_prompt | model | parser ,
+    "detailed" : RunnableLambda(lambda x : x['detailed']) | detailed_prompt | model | parser
+})
+
+result = parallelChain2.invoke({
     "short" : {"topic" : "Programming"} ,
     "detailed" : {"topic" : "deployment"} 
 })
-print(result['short'])
+
+print(result["short"])
 print(result["detailed"])
